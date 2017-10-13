@@ -8,8 +8,7 @@
 #include <sstream>
 #include "gui.h"
 
-const char suit[4][5]={"梅花","红桃","方片","黑桃"};
-//TODO:把T改为10
+const char suit[4][8]={"Club","Heart","Diamond","Ace"};
 const char *number[14]={"0","A","2","3","4","5","6","7","8","9","10","J","Q","K" };
 enum choice{YES = 0, NO = 1, QUIT = 2};
 
@@ -66,7 +65,7 @@ choice getChoice(Window *win) {
                 wprint(win, "Bye", 0, true);
                 return QUIT;
             default:
-                wprint(win, "请您检查输入", 0, true);
+                wprint(win, "Please check your input", 0, true);
                 continue;
         }
     }
@@ -76,23 +75,22 @@ choice getChoice(Window *win) {
 void displayHand(Window *win, Card *hand, int n,int score){
     if(!n) return;
     std::stringstream ss;
-    wprint(win, "您现在手牌是", 0, true);
+    wprint(win, "Your current hand is", 0, true);
     ss<<"#";
     for(int i=0; i<n; i++){
-        ss<<"【"<<hand[i].suit<<hand[i].num<<"】";
+        ss<<"[" <<hand[i].suit<<' '<<hand[i].num<<"] ";
     }
-    //把最后多出来的一个空格删掉
-    ss<<"\b#";
+    ss<<"#";
     wprint(win, ss.str().c_str(), 0, true);
     memset(buffer, 0, sizeof(buffer));
-    sprintf(buffer, "共计 %d 点", score);
+    sprintf(buffer, "Sum: %d", score);
     wprint(win, buffer, 500, true);
 }
 
 void drawCard(Window *win, Card *hand, int *size, int *score, int *index){
     hand[(*size)++]=card[*index];
     memset(buffer, 0, sizeof(buffer));
-    sprintf(buffer,"您获得一张【%s%s】", card[*index].suit, card[*index].num);
+    sprintf(buffer,"You have picked [%s %s]", card[*index].suit, card[*index].num);
     wprint(win, buffer, 1000, true);
     *score+=card[*index].score;
     (*index)++;
@@ -104,11 +102,13 @@ int main() {
     init();
     Window *status = new Window(3, COLS, LINES-3, 0, *simple);
     Window *p[2];
-    p[0] = new Window(LINES-2, COLS/2, 0, 0, *simple);
-    p[1] = new Window(LINES-2, COLS/2, 0, COLS/2, *simple);
+    p[0] = new Window(LINES-3, COLS/2-1, 0, 0, *simple);
+    p[1] = new Window(LINES-3, COLS/2-1, 0, COLS/2+1, *simple);
 
     p[0]->create_box(true);
     p[1]->create_box(true);
+
+    status->create_box(true);
 
     Card hand[2][21];
     int handSize[2],score[2];
@@ -126,9 +126,9 @@ int main() {
     while(true){
         memset(buffer, 0, sizeof(buffer));
         wclear(status->win);
-        sprintf(buffer, "游戏开始，玩家 %d 为庄主", e()%2+1);
+        sprintf(buffer, "Game started，the dealer is player %d ", e()%2+1);
         wmove(status->win, 1, 1);
-        wprint(status, buffer, 1000, true);
+        wprint(status, buffer, 2000, true);
 
         shuffle(card,52, &e);
 
@@ -138,6 +138,7 @@ int main() {
         flag =  index = turn = 0;
         while(true){
             memset(buffer, 0, sizeof(buffer));
+            wmove(status->win, 1, 1);
             sprintf(buffer, "TURN %d", ++turn);
             wprint(status, buffer, 1000, true);
             p[0]->create_box(false);
@@ -149,7 +150,7 @@ int main() {
 
                 memset(buffer, 0, sizeof(buffer));
                 wclear(status->win);
-                sprintf(buffer, "玩家 %d 的回合", i+1);
+                sprintf(buffer, "Player %d 's move", i+1);
                 wmove(status->win, 1, 1);
                 wprint(status, buffer, 0, true);
 
@@ -159,13 +160,13 @@ int main() {
                     drawCard(p[i], hand[i], &handSize[i], &score[i], &index);
                     continue;
                 }
-                wprint(p[i],"是否抽一张牌？",1000, true);
+                wprint(p[i],"Draw a card",0, true);
                 choice c = getChoice(p[i]);
                 if(c==YES){
                     drawCard(p[i], hand[i], &handSize[i], &score[i], &index);
                     if(score[i]>21){
                         memset(buffer, 0, sizeof(buffer));
-                        sprintf(buffer, "玩家 %d 爆牌，出局，玩家 %d 获胜", i+1, 2-i);
+                        sprintf(buffer, "Player %d busted, winner is player %d ", i+1, 2-i);
                         wclear(p[i]->win);
                         wmove(status->win, 1, 1);
                         wprint(status, buffer, 2000, true);
@@ -192,7 +193,7 @@ int main() {
                     break;
                 }else{
                     memset(buffer, 0, sizeof(buffer));
-                    sprintf(buffer, "玩家 %d 获得胜利\n", 1+(score[0]>score[1]?0:1));
+                    sprintf(buffer, "Player %d won\n", 1+(score[0]>score[1]?0:1));
                     wclear(status->win);
                     wmove(status->win, 1, 1);
                     wprint(status, buffer, 1000, true);
@@ -202,11 +203,11 @@ int main() {
         }
         wclear(status->win);
         wmove(status->win, 1, 1);
-        wprint(status, "游戏结束", 1000, true);
+        wprint(status, "Game Over", 1000, true);
         if(flag==1) break;
         wclear(status->win);
         wmove(status->win, 1, 1);
-        wprint(status, "重新开始游戏", 1000, true);
+        wprint(status, "Restarting", 1000, true);
     }
     getch();
     endwin();
