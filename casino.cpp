@@ -138,9 +138,11 @@ int main() {
         flag =  index = turn = 0;
         while(true){
             memset(buffer, 0, sizeof(buffer));
-            wmove(status->win, 1, 1);
             sprintf(buffer, "TURN %d", ++turn);
+            wclear(status->win);
+            wmove(status->win, 1, 1);
             wprint(status, buffer, 1000, true);
+
             p[0]->create_box(false);
             p[0]->create_box(false);
 
